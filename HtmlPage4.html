@@ -1,0 +1,279 @@
+﻿<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>בריחה לשונית</title>
+    <style>
+        body {
+            font-family: 'Alef', sans-serif;
+            background: linear-gradient(135deg, #f0f4f8, #dceeff);
+            margin: 0;
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-image: url('img/chatgpt_image_apr_24_2025_11_29_18_pm.png');
+            background-repeat: no-repeat;
+            background-size: cover;
+            background-position: center;
+            overflow: hidden;
+        }
+
+        html, body {
+            height: 100%;
+            width: 100%;
+        }
+
+        .card {
+            background: white;
+            padding: 2rem;
+            border-radius: 2rem;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            max-width: 700px;
+            width: 100%;
+            text-align: center;
+            direction: rtl;
+        }
+
+        h1 {
+            margin-bottom: 1.5rem;
+            color: #004a99;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .styled-link {
+            display: inline-block;
+            margin-top: 2rem;
+            padding: 0.75rem 1.5rem;
+            background-color: #0077cc;
+            color: white;
+            text-decoration: none;
+            border-radius: 1rem;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            text-align: center;
+        }
+
+            .styled-link:hover {
+                background-color: #005fa3;
+                transform: scale(1.05);
+            }
+
+        .question {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .option, .submit-btn {
+            padding: 0.75rem;
+            border: 2px solid #0077cc;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+            .option:hover, .submit-btn:hover {
+                background-color: #e6f2ff;
+            }
+
+        .feedback {
+            margin-top: 1rem;
+            font-weight: bold;
+        }
+
+        #timer {
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            background: white;
+            padding: 0.5rem 1rem;
+            border-radius: 1rem;
+            font-weight: bold;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div id="timer"></div>
+
+    <div class="card">
+        <h1>בריחה לשונית 🚪</h1>
+        <div class="question" id="question"></div>
+        <div class="options" id="options"></div>
+        <div class="feedback" id="feedback"></div>
+    </div>
+
+
+    <a id="final-link" class="hidden styled-link" href="HtmlPage5.html">🔗 לעמוד הבא</a>
+
+    <script>
+        window.onload = function () {
+            const steps = [
+                {
+                    q: 'מהו זמן הפועל "נקב" במשפט "הפועל נקב את הקרש"?',
+                    options: ['עבר', 'הווה', 'עתיד', 'ציווי'],
+                    correct: 0,
+                    letter:'ת'
+                },
+                {
+                    q: 'איזו מילה נחשבת לשם תואר בבניין קל?',
+                    options: ['נחוש', 'קרא', 'בצר', 'קרצף'],
+                    correct: 0
+                },
+                {
+                    q: 'איזה פועל הוא יוצא דופן בגזרה?',
+                    options: ['סמא', 'דכא', 'עבש', 'פלא'],
+                    correct: 3,
+                    letter:'ד'
+                },
+                {
+                    q: 'האם המילה "גדוש" מצביעה על פעיל או סביל?',
+                    options: ['פעיל', 'סביל', 'גם פעיל גם סביל', 'לא פעיל ולא סביל'],
+                    correct: 1
+                },
+                {
+                    q: 'איזה פועל יוצא דופן לפי הבניין?',
+                    options: ['קפא', 'דליה', 'מרכז', 'תחם'],
+                    correct: 1,
+                    letter:'ל'
+                },
+                {
+                    q: 'איזה מהפעלים הבאים הוא בבניין נפעל ומשויך לגזרת נלי"ה?',
+                    options: ['נענה', 'נמכר', 'נשבר', 'נקטל'],
+                    correct: 0
+                },
+                {
+                    q: '🔤 מאיפה אתה תברח לפי האותיות שצברת?',
+                    input: true,
+                    answer: 'דלת'
+                }
+            ];
+
+            let current = 0;
+            let interval;
+            const qEl = document.getElementById('question');
+            const oEl = document.getElementById('options');
+            const fEl = document.getElementById('feedback');
+            const timerEl = document.getElementById('timer');
+            const finalLink = document.getElementById('final-link');
+
+            finalLink.classList.add('hidden'); // לוודא שהוא מוסתר בהתחלה
+
+            function startTimer() {
+                localStorage.setItem('endTime', Date.now() + 3 * 60 * 1000); // 15 דקות
+                interval = setInterval(updateTimer, 1000);
+            }
+
+            function updateTimer() {
+                const endTime = parseInt(localStorage.getItem('endTime'));
+                const now = Date.now();
+                const diff = endTime - now;
+
+                if (diff <= 0) {
+                    clearInterval(interval);
+                    alert('⏰ הזמן נגמר!');
+                    location.reload();
+                    return;
+                }
+
+                const minutes = Math.floor(diff / 60000);
+                const seconds = Math.floor((diff % 60000) / 1000);
+                timerEl.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds} ⏳`;
+            }
+
+            function showQuestion() {
+                if (current >= steps.length) return;
+
+                const step = steps[current];
+                qEl.textContent = step.q;
+                oEl.innerHTML = '';
+                fEl.textContent = '';
+
+                if (step.input) {
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.id = 'input-answer';
+                    input.style.padding = '0.5rem';
+                    input.style.marginBottom = '1rem';
+                    oEl.appendChild(input);
+
+                    const submit = document.createElement('div');
+                    submit.textContent = 'שלח';
+                    submit.className = 'submit-btn';
+                    submit.onclick = checkTextAnswer;
+                    oEl.appendChild(submit);
+                } else {
+                    step.options.forEach((opt, i) => {
+                        const btn = document.createElement('div');
+                        btn.textContent = opt;
+                        btn.className = 'option';
+                        btn.onclick = () => checkAnswer(i);
+                        oEl.appendChild(btn);
+                    });
+                }
+            }
+
+            function checkAnswer(selected) {
+                const step = steps[current];
+                if (selected === step.correct) {
+                    fEl.textContent = '✔️ תשובה נכונה!' + (step.letter ? ` קיבלת את האות "${step.letter}"` : '');
+                    const nextBtn = document.createElement('div');
+                    nextBtn.textContent = 'המשך';
+                    nextBtn.className = 'submit-btn';
+                    nextBtn.onclick = () => {
+                        current++;
+                        if (current >= steps.length) {
+                            qEl.textContent = ''
+                            oEl.innerHTML = '';
+                            fEl.textContent = '🎉 סיימת את כל השאלות!';
+                            finalLink.classList.remove('hidden');
+                        } else {
+                            showQuestion();
+                        }
+                    };
+                    oEl.innerHTML = '';
+                    oEl.appendChild(nextBtn);
+                } else {
+                    fEl.textContent = '❌ לא נכון. ירדו לך 20 שניות!';
+                    const newEnd = parseInt(localStorage.getItem('endTime')) - 20000;
+                    localStorage.setItem('endTime', newEnd);
+                }
+            }
+
+            function checkTextAnswer() {
+                const step = steps[current];
+                const input = document.getElementById('input-answer');
+                if (input.value.trim() === step.answer) {
+                    fEl.textContent = `🎉 תשובה נכונה! כל הכבוד! אתה בורח דרך ה: ${step.answer}`;
+                    oEl.innerHTML = '';
+                    qEl.textContent = '';
+                    current++;
+
+                    if (current === steps.length) {
+                        finalLink.classList.remove('hidden');
+                    }
+                } else {
+                    fEl.textContent = '❌ לא נכון. ירדו לך 20 שניות!';
+                    const newEnd = parseInt(localStorage.getItem('endTime')) - 20000;
+                    localStorage.setItem('endTime', newEnd);
+                }
+            }
+
+            startTimer();
+            showQuestion();
+        };
+    </script>
+</body>
+</html>

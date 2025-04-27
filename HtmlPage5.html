@@ -1,0 +1,299 @@
+﻿<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>בריחה לשונית</title>
+    <style>
+        body {
+            font-family: 'Alef', sans-serif;
+            background: linear-gradient(135deg, #f0f4f8, #dceeff);
+            margin: 0;
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-image: url('img/ניוקין.jpg');
+            background-repeat: no-repeat;
+            background-size: cover;
+        }
+
+        .card {
+            background: white;
+            padding: 2rem;
+            border-radius: 2rem;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            max-width: 700px;
+            width: 100%;
+            text-align: center;
+            direction: rtl;
+        }
+
+        h1 {
+            margin-bottom: 1rem;
+            color: #004a99;
+        }
+
+        #timer {
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            background: white;
+            padding: 0.5rem 1rem;
+            border-radius: 1rem;
+            font-weight: bold;
+            font-size: 1.5rem;
+            z-index: 1000;
+        }
+
+        .question {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .option, .submit-btn {
+            padding: 0.75rem;
+            border: 2px solid #0077cc;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            user-select: none;
+        }
+
+            .option:hover, .submit-btn:hover {
+                background-color: #e6f2ff;
+            }
+
+        .feedback {
+            margin-top: 1rem;
+            font-weight: bold;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        #escapeInput {
+            margin-top: 1rem;
+            font-size: 1.1rem;
+            padding: 0.5rem;
+            width: 70%;
+            border: 2px solid #0077cc;
+            border-radius: 0.5rem;
+        }
+
+        .error {
+            color: red;
+            margin-top: 0.5rem;
+        }
+
+        #finishMessageContainer p {
+            font-size: 1.5rem;
+            color: #007700;
+        }
+
+        #finishImage {
+            max-width: 450px;
+            width: 90%;
+            height: auto;
+            margin-top: 1rem;
+            border-radius: 1rem;
+        }
+
+        #restart-btn {
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div id="timer"></div>
+
+    <!-- משחק -->
+    <div class="card" id="game-card">
+        <h1>בריחה לשונית 🚪</h1>
+        <div class="question" id="question"></div>
+        <div class="options" id="options"></div>
+        <div class="feedback" id="feedback"></div>
+        <div class="submit-btn" id="restart-btn">התחל מחדש</div>
+    </div>
+
+    <!-- תיבת קלט בסוף -->
+    <div class="card hidden" id="escapeMessageContainer">
+        <p id="escapeQuestion"></p>
+        <input id="escapeInput" type="text" placeholder="הקלד את המילה…">
+        <div class="submit-btn" id="escapeSubmit">שלח</div>
+        <div class="error" id="escapeFeedback"></div>
+    </div>
+
+    <!-- מסך סיום -->
+    <div class="card hidden" id="finishMessageContainer">
+        <p>כל הכבוד, הגעתם ללילי 🎉</p>
+        <img id="finishImage" src="img/דמ8דמקןמ.png" alt="סיום">
+    </div>
+
+    <script>
+        // ==== טיימר 15 דקות מתאפס בטעינת דף ====
+        const timerEl = document.getElementById('timer');
+        function resetTimer() {
+            localStorage.setItem('endTime', Date.now() + 3 * 60 * 1000);
+        }
+        function updateTimer() {
+            const end = +localStorage.getItem('endTime');
+            const diff = end - Date.now();
+            if (diff <= 0) {
+                clearInterval(timerInt);
+                alert('⏰ הזמן נגמר!');
+                location.reload();
+                return;
+            }
+            const m = Math.floor(diff / 60000),
+                s = Math.floor((diff % 60000) / 1000);
+            timerEl.textContent = `${m}:${s < 10 ? '0' : ''}${s} ⏳`;
+        }
+        let timerInt;
+
+        // ==== שאלות המשחק (עם ספירת שאלות ו-2 שניות המתנה) ====
+        const steps = [
+            {
+                q: '1. מה הקשר בין "כרת" בבניין קל לבין "כרה" בבניין פעיל?',
+                options: [
+                    'כרת בבניין קל, קרה בבניין פעיל',
+                    'כרת בבניין קל, קרה בנפעל',
+                    'כרת בבניין פיעל, קרה בנפעל',
+                    'שניהם באותה גזרה'
+                ],
+                correct: 0,
+                letter: 'מ'
+            },
+            {
+                q: '2. מהי צורת הציווי של "שבה" (נלי/ה)?',
+                options: ['שב', 'שובה', 'שבא', 'שוב'],
+                correct: 3,
+                letter: 'ק'
+            },
+            {
+                q: '3. לאיזו גזרה משתייך הפועל "ברא"?',
+                options: ['שלמים', 'מרובעים', 'נל"א', 'נלי/ה'],
+                correct: 2,
+                letter: 'ה'
+            },
+            {
+                q: '4. מהו השורש של הפועל "נרמל"?',
+                options: ['נרם', 'נרמל', 'רמל', 'רמלל'],
+                correct: 2,
+                letter: '3'
+            },
+            {
+                q: '5. באיזה זמן נמצא הפועל "סייע" במשפט "המדריך סייע לילדים"?',
+                options: ['עתיד', 'הווה', 'עבר', 'ציווי'],
+                correct: 2,
+                letter:''
+            },
+            {
+                q: '6. מהו גוף הפועל "התרענו"?',
+                options: [
+                    'גוף ראשון רבים',
+                    'גוף שלישי רבים',
+                    'גוף שני רבים',
+                    'גוף ראשון יחיד'
+                ],
+                correct: 0,
+                letter: 'ו'
+            }
+        ];
+        let current = 0, letters = '';
+
+        const qEl = document.getElementById('question'),
+            oEl = document.getElementById('options'),
+            fEl = document.getElementById('feedback'),
+            quiz = document.getElementById('game-card'),
+            escCont = document.getElementById('escapeMessageContainer'),
+            escQ = document.getElementById('escapeQuestion'),
+            escI = document.getElementById('escapeInput'),
+            escF = document.getElementById('escapeFeedback'),
+            escBtn = document.getElementById('escapeSubmit'),
+            finishCont = document.getElementById('finishMessageContainer'),
+            restartBtn = document.getElementById('restart-btn');
+
+        function startGame() {
+            resetTimer();
+            clearInterval(timerInt);
+            updateTimer();
+            timerInt = setInterval(updateTimer, 1000);
+
+            current = 0;
+            letters = '';
+            quiz.classList.remove('hidden');
+            escCont.classList.add('hidden');
+            finishCont.classList.add('hidden');
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const step = steps[current];
+            qEl.textContent = step.q;
+            oEl.innerHTML = '';
+            fEl.textContent = '';
+            step.options.forEach((opt, i) => {
+                const btn = document.createElement('div');
+                btn.className = 'option';
+                btn.textContent = opt;
+                btn.onclick = () => checkAnswer(i);
+                oEl.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(i) {
+            const step = steps[current];
+            if (i === step.correct) {
+                letters += step.letter;
+                fEl.textContent = `✔️ נכון! קיבלת את האות "${step.letter}"`;
+                setTimeout(() => {
+                    current++;
+                    if (current < steps.length) {
+                        showQuestion();
+                    } else {
+                        showEscape();
+                    }
+                }, 2000);
+            } else {
+                fEl.textContent = '❌ לא נכון, נסה שוב, ירדו לכם 20 שניות';
+                const newEnd = +localStorage.getItem('endTime') - 20000;
+                localStorage.setItem('endTime', newEnd);
+            }
+        }
+
+        function showEscape() {
+            quiz.classList.add('hidden');
+            escQ.textContent = `לפי האותיות שצברתם – מאיפה תגיעו?`;
+            escI.value = '';
+            escF.textContent = '';
+            escCont.classList.remove('hidden');
+        }
+
+        escBtn.onclick = () => {
+            if (escI.value.trim() === 'קומה 3') {
+                escCont.classList.add('hidden');
+                finishCont.classList.remove('hidden');
+            } else {
+                escF.textContent = '❌ לא נכון, נסה שוב, ירדו לכם 20 שניות';
+                const newEnd = +localStorage.getItem('endTime') - 20000;
+                localStorage.setItem('endTime', newEnd);
+            }
+        };
+
+        restartBtn.onclick = startGame;
+
+        // התחל אוטומטית
+        startGame();
+        <a id="final-link" href="HtmlPage2.html">🔗 למשחק מחדש</a>
+    </script>
+</body>
+</html>
