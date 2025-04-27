@@ -1,6 +1,6 @@
 <head>
-    <title>שלום</title>
+    שלום
 </head>
 <body>
-    <a href="HtmlPage6.html">HtmlPage6.html</a>
+    <a style="font-size: 40px;"href="HtmlPage6.html">לחץ למעבר למשחק</a>
 </body>
